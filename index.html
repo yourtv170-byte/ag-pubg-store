@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PUBG Service SMM Panel</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent-gold: #f59e0b;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background: var(--bg-color); color: var(--text-color); }
+        
+        .container { max-width: 600px; margin: 0 auto; padding: 15px; }
+        .card { background: var(--card-bg); padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #334155; }
+        .btn { width: 100%; padding: 10px; background: var(--accent-gold); border: none; font-weight: bold; cursor: pointer; border-radius: 6px; margin-top: 8px; }
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-success { background: var(--success); color: #fff; }
+        .input-group { margin-bottom: 10px; }
+        .input-group label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; }
+        .input-group input, .input-group select { width: 100%; padding: 10px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 6px; }
+        
+        .nav { display: flex; justify-content: space-around; background: #1e293b; padding: 10px; position: fixed; bottom: 0; left: 0; right: 0; border-top: 1px solid #334155; }
+        .nav-item { color: var(--text-muted); cursor: pointer; font-size: 0.9rem; text-align: center; }
+        .nav-item.active { color: var(--accent-gold); font-weight: bold; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
+        th, td { padding: 8px; border: 1px solid #334155; text-align: left; }
+        th { background: #0f172a; color: var(--accent-gold); }
+        .hidden { display: none; }
+    </style>
+</head>
+<body style="padding-bottom: 60px;">
+
+<div class="container">
+    <h2 style="text-align: center; color: var(--accent-gold); margin-bottom: 15px;">🎮 PUBG STORE PANEL</h2>
+
+    <!-- AUTH SECTION -->
+    <div id="authSection" class="card">
+        <h3>Login / Register</h3>
+        <div class="input-group"><label>Username</label><input type="text" id="authUsername"></div>
+        <div class="input-group"><label>Password</label><input type="password" id="authPassword"></div>
+        <button class="btn" onclick="login()">Login</button>
+        <button class="btn" style="background:#3b82f6; color:#fff;" onclick="register()">Register</button>
+    </div>
+
+    <!-- MAIN APP SECTION -->
+    <div id="appSection" class="hidden">
+        <!-- Balance Dashboard -->
+        <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <span>Logged in as: <strong id="dispUser"></strong></span><br>
+                <small style="color:var(--text-muted);" id="dispRole"></small>
+            </div>
+            <div style="text-align:right;">
+                <span style="font-size:0.8rem; color:var(--text-muted);">Balance</span>
+                <h3 style="color:var(--success);" id="dispBalance">$0.00</h3>
+            </div>
+        </div>
+
+        <!-- USER TAB 1: New Order -->
+        <div id="tabNewOrder" class="tab-content">
+            <div class="card">
+                <h3>🛒 Create New Order</h3>
+                <div class="input-group">
+                    <label>Select Category / Product</label>
+                    <select id="orderProductSelect"></select>
+                </div>
+                <div class="input-group">
+                    <label>PUBG Player ID / Account Details</label>
+                    <input type="text" id="orderPlayerID" placeholder="Enter PUBG ID (e.g. 512345678)">
+                </div>
+                <button class="btn" onclick="placeOrder()">Place Order</button>
+            </div>
+        </div>
+
+        <!-- USER TAB 2: Add Funds -->
+        <div id="tabAddFunds" class="tab-content hidden">
+            <div class="card">
+                <h3>💳 Add Funds / Deposit</h3>
+                <div class="input-group">
+                    <label>Payment Method</label>
+                    <select id="depMethod">
+                        <option value="Easypaisa">Easypaisa / JazzCash</option>
+                        <option value="Crypto">Crypto (USDT TRC20)</option>
+                        <option value="Bank Transfer">Bank Transfer</option>
+                    </select>
+                </div>
+                <div class="input-group"><label>Amount ($)</label><input type="number" id="depAmount"></div>
+                <div class="input-group"><label>Transaction ID / Reference Code</label><input type="text" id="depTxID"></div>
+                <button class="btn" onclick="submitDeposit()">Submit Payment Request</button>
+            </div>
+        </div>
+
+        <!-- USER TAB 3: History -->
+        <div id="tabHistory" class="tab-content hidden">
+            <div class="card">
+                <h3>📦 Order History</h3>
+                <table>
+                    <thead><tr><th>Item</th><th>ID</th><th>Price</th><th>Status</th></tr></thead>
+                    <tbody id="tblUserOrders"></tbody>
+                </table>
+            </div>
+            <div class="card">
+                <h3>💳 Deposit History</h3>
+                <table>
+                    <thead><tr><th>Amount</th><th>Method</th><th>TxID</th><th>Status</th></tr></thead>
+                    <tbody id="tblUserDeposits"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ADMIN TAB: Control Panel -->
+        <div id="tabAdmin" class="tab-content hidden">
+            <div class="card">
+                <h3>➕ Add New Product</h3>
+                <div class="input-group"><label>Title</label><input type="text" id="admProdTitle" placeholder="60 UC / Royal Pass"></div>
+                <div class="input-group"><label>Category</label><input type="text" id="admProdCat" placeholder="UC TopUp"></div>
+                <div class="input-group"><label>Price ($)</label><input type="number" id="admProdPrice"></div>
+                <button class="btn" onclick="adminAddProduct()">Add Product</button>
+            </div>
+            <div class="card">
+                <h3>📑 All Client Orders</h3>
+                <table>
+                    <thead><tr><th>User</th><th>Item</th><th>PUBG ID</th><th>Status</th><th>Action</th></tr></thead>
+                    <tbody id="tblAdminOrders"></tbody>
+                </table>
+            </div>
+            <div class="card">
+                <h3>💰 Deposit Requests</h3>
+                <table>
+                    <thead><tr><th>User</th><th>Amt</th><th>TxID</th><th>Status</th><th>Action</th></tr></thead>
+                    <tbody id="tblAdminDeposits"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Navigation Bar -->
+<div id="bottomNav" class="nav hidden">
+    <div class="nav-item active" onclick="switchTab('tabNewOrder', this)">Order</div>
+    <div class="nav-item" onclick="switchTab('tabAddFunds', this)">Add Funds</div>
+    <div class="nav-item" onclick="switchTab('tabHistory', this)">History</div>
+    <div class="nav-item hidden" id="navAdminBtn" onclick="switchTab('tabAdmin', this)">Admin</div>
+    <div class="nav-item" onclick="logout()">Logout</div>
+</div>
+
+<script>
+    const API = 'http://localhost:5000/api';
+    let token = localStorage.getItem('token');
+    let userRole = localStorage.getItem('role');
+
+    if(token) showApp();
+
+    async function apiCall(endpoint, method = 'GET', data = null) {
+        const headers = { 'Content-Type': 'application/json' };
+        if(token) headers['Authorization'] = `Bearer ${token}`;
+        const res = await fetch(API + endpoint, { method, headers, body: data ? JSON.stringify(data) : null });
+        return res.json();
+    }
+
+    async function login() {
+        const res = await apiCall('/auth/login', 'POST', { username: authUsername.value, password: authPassword.value });
+        if(res.token) {
+            token = res.token;
+            userRole = res.role;
+            localStorage.setItem('token', token);
+            localStorage.setItem('role', userRole);
+            showApp();
+        } else alert(res.message);
+    }
+
+    async function register() {
+        const res = await apiCall('/auth/register', 'POST', { username: authUsername.value, password: authPassword.value });
+        alert(res.message);
+    }
+
+    function logout() { localStorage.clear(); location.reload(); }
+
+    function showApp() {
+        authSection.classList.add('hidden');
+        appSection.classList.remove('hidden');
+        bottomNav.classList.remove('hidden');
+        if(userRole === 'admin') navAdminBtn.classList.remove('hidden');
+        loadProfile();
+        loadProducts();
+    }
+
+    async function loadProfile() {
+        const user = await apiCall('/user/profile');
+        dispUser.innerText = user.username;
+        dispRole.innerText = user.role.toUpperCase();
+        dispBalance.innerText = `$${user.balance.toFixed(2)}`;
+    }
+
+    async function loadProducts() {
+        const products = await apiCall('/products');
+        orderProductSelect.innerHTML = products.map(p => `<option value="${p._id}">${p.title} - $${p.price}</option>`).join('');
+    }
+
+    async function placeOrder() {
+        const res = await apiCall('/user/buy', 'POST', { productId: orderProductSelect.value, playerID: orderPlayerID.value });
+        alert(res.message);
+        loadProfile();
+    }
+
+    async function submitDeposit() {
+        const res = await apiCall('/user/add-balance', 'POST', { amount: depAmount.value, method: depMethod.value, transactionId: depTxID.value });
+        alert(res.message);
+    }
+
+    function switchTab(tabId, el) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(tabId).classList.remove('hidden');
+        if(el) el.classList.add('active');
+
+        if(tabId === 'tabHistory') loadHistory();
+        if(tabId === 'tabAdmin') loadAdminPanel();
+    }
+
+    async function loadHistory() {
+        const orders = await apiCall('/user/orders');
+        tblUserOrders.innerHTML = orders.map(o => `<tr><td>${o.productTitle}</td><td>${o.playerID}</td><td>$${o.price}</td><td>${o.status}</td></tr>`).join('');
+        
+        const deposits = await apiCall('/user/payments');
+        tblUserDeposits.innerHTML = deposits.map(d => `<tr><td>$${d.amount}</td><td>${d.method}</td><td>${d.transactionId}</td><td>${d.status}</td></tr>`).join('');
+    }
+
+    async function loadAdminPanel() {
+        const orders = await apiCall('/admin/orders');
+        tblAdminOrders.innerHTML = orders.map(o => `
+            <tr>
+                <td>${o.username}</td><td>${o.productTitle}</td><td>${o.playerID}</td><td>${o.status}</td>
+                <td>
+                    <button onclick="updateOrderStatus('${o._id}', 'Completed')">Done</button>
+                    <button onclick="updateOrderStatus('${o._id}', 'Cancelled')">Cancel</button>
+                </td>
+            </tr>
+        `).join('');
+
+        const deposits = await apiCall('/admin/deposits');
+        tblAdminDeposits.innerHTML = deposits.map(d => `
+            <tr>
+                <td>${d.username}</td><td>$${d.amount}</td><td>${d.transactionId}</td><td>${d.status}</td>
+                <td>
+                    <button onclick="processDeposit('${d._id}', 'Approved')">Approve</button>
+                    <button onclick="processDeposit('${d._id}', 'Rejected')">Reject</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function adminAddProduct() {
+        await apiCall('/admin/product', 'POST', { title: admProdTitle.value, category: admProdCat.value, price: admProdPrice.value });
+        alert('Product Added');
+        loadProducts();
+    }
+
+    async function updateOrderStatus(orderId, status) {
+        await apiCall('/admin/order/status', 'POST', { orderId, status });
+        loadAdminPanel();
+    }
+
+    async function processDeposit(depositId, action) {
+        await apiCall('/admin/deposit/action', 'POST', { depositId, action });
+        loadAdminPanel();
+    }
+</script>
+</body>
+</html>
